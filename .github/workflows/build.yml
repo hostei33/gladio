@@ -12,8 +12,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install cross compiler
-        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+      - name: Install cross compiler and X11 dev libs
+        run: |
+          sudo dpkg --add-architecture arm64
+          sudo sed -i 's/deb http/deb [arch=amd64] http/' /etc/apt/sources.list
+          sudo sed -i '/^deb /a deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports noble main' /etc/apt/sources.list
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu libx11-dev:arm64
 
       - name: Configure
         run: |
