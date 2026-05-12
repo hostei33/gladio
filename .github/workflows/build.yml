@@ -1,0 +1,41 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-android-aarch64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup NDK
+        uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: v27
+          add-to-path: true
+
+      - name: Configure
+        run: |
+          cmake -B build \
+            -DCMAKE_SYSTEM_NAME=Android \
+            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
+            -DCMAKE_ANDROID_ARCH_ABI=arm64-v8a \
+            -DCMAKE_ANDROID_NDK=${{ steps.setup-ndk.outputs.ndk-path }} \
+            -DCMAKE_C_COMPILER=${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android33-clang \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_C_FLAGS_RELEASE="-O2 -Wl,-rpath=/data/data/com.winlator/files/rootfs/lib" \
+            -DCMAKE_INSTALL_PREFIX=/data/data/com.winlator/files/rootfs/usr
+
+      - name: Build
+        run: cmake --build build -j $(nproc)
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: libGL-aarch64
+          path: build/libGL.so
